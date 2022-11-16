@@ -197,3 +197,47 @@ GROUP BY co.order_id
 SELECT order_id, Count
 FROM pizzas
 WHERE RN = 1
+
+--7. For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
+
+SELECT *
+FROM pizza_runner.dbo.customer_orders AS co
+
+UPDATE pizza_runner.dbo.customer_orders
+SET exclusions = 'none'
+WHERE exclusions = ' '
+OR exclusions = 'null'
+
+UPDATE pizza_runner.dbo.customer_orders
+SET extras = 'none'
+WHERE extras = ' '
+OR extras = 'null'
+OR extras = 'NULL'
+OR extras IS NULL
+
+SELECT
+	c.customer_id,
+	sum(
+		CASE
+			WHEN c.exclusions <> 'none' 
+				OR c.extras <> 'none' THEN 1
+			ELSE 0
+		END
+	) AS has_changes,
+	sum(
+		CASE
+			WHEN c.exclusions = 'none' 
+				OR c.extras = 'none' THEN 1
+			ELSE 0
+		END
+	) AS no_changes
+FROM
+	pizza_runner.dbo.customer_orders AS c
+JOIN pizza_runner.dbo.runner_orders AS rn
+ON c.order_id = rn.order_id
+WHERE
+	rn.cancellation = 'no'
+GROUP BY
+	c.customer_id
+ORDER BY
+	c.customer_id;
