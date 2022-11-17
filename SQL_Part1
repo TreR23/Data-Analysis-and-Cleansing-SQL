@@ -241,3 +241,54 @@ GROUP BY
 	c.customer_id
 ORDER BY
 	c.customer_id;
+	
+--8. How many pizzas were delivered that had both exclusions and extras?
+
+
+WITH count2 AS (
+SELECT
+	c.customer_id,
+	sum(
+		CASE
+			WHEN c.exclusions <> 'none' 
+				OR c.extras <> 'none' THEN 1
+			ELSE 0
+		END
+	) AS has_changes,
+	sum(
+		CASE
+			WHEN c.exclusions = 'none' 
+				OR c.extras = 'none' THEN 1
+			ELSE 0
+		END
+	) AS no_changes
+FROM
+	pizza_runner.dbo.customer_orders AS c
+JOIN pizza_runner.dbo.runner_orders AS rn
+ON c.order_id = rn.order_id
+WHERE
+	rn.cancellation = 'no'
+GROUP BY
+	c.customer_id
+--ORDER BY c.customer_id
+	)
+
+	SELECT SUM(has_changes) AS Has_Changes, SUM(no_changes) AS No_Changes
+	FROM count2
+	WHERE has_changes <> 0
+	AND no_changes <> 0 ;
+
+
+--9. What was the total volume of pizzas ordered for each hour of the day?
+
+SELECT DATEPART(HOUR, [order_time]) AS Hour, COUNT(order_id)  AS PizzaCount
+FROM pizza_runner.dbo.customer_orders
+GROUP BY DATEPART(HOUR, [order_time])
+ORDER BY DATEPART(HOUR, [order_time]);
+
+--.10 What was the volume of orders for each day of the week?
+
+SELECT DATENAME(WEEKDAY, [order_time]) AS Weekday, COUNT(order_id)  AS PizzaCount
+FROM pizza_runner.dbo.customer_orders
+GROUP BY DATENAME(WEEKDAY, [order_time])
+ORDER BY DATENAME(WEEKDAY, [order_time]);
